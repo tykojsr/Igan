@@ -108,6 +108,20 @@ function getHomePageDataFromFirestoreAndSave() {
 						col.appendChild(pointElement);
 						aboutUsPoints.appendChild(col);
 					});
+					if (homepageData.showWhyUsSection) {
+						document.getElementById("whyUsCaption").innerHTML =
+							homepageData.whyUScaption;
+						for (let i = 1; i <= 4; i++) {
+							document.getElementById(`whyUsTitle${i}`).innerHTML =
+								homepageData[`whyUsTitle${i}`];
+							console.log(homepageData[`whyUsTitle${i}`]);
+							document.getElementById(`whyUsDescription${i}`).innerHTML =
+								homepageData[`whyUsDescription${i}`];
+						}
+						document.getElementById("whyUsimageUrl").src =
+							homepageData.whyUsimageUrl;
+						document.getElementById("whyUsSection").style.display = "block";
+					}
 					sessionStorage.setItem("homepageData", JSON.stringify(homepageData));
 				}
 			} else {

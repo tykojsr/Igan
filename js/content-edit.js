@@ -111,15 +111,19 @@ async function checkToggleData() {
 			const isAboutUsSectionVisible = data.showAboutUsSection || false;
 			const isProductSectionVisible = data.showProductSection || false;
 			const isServiceSectionVisible = data.showServiceSection || false;
+			const isWhyUsSectionVisible = data.showWhyUsSection || false;
 
 			document.getElementById("toggleAboutUs").checked =
 				isAboutUsSectionVisible;
+			document.getElementById("toggleWhyChooseUs").checked =
+				isWhyUsSectionVisible;
 			document.getElementById("toggleService").checked =
 				isServiceSectionVisible;
 			document.getElementById("toggleProduct").checked =
 				isProductSectionVisible;
 
 			toggleAboutUsFormVisibility(isAboutUsSectionVisible);
+			toggleWhyUsFormVisibility(isWhyUsSectionVisible);
 			toggleProductFormVisibility(isProductSectionVisible);
 			toggleServiceFormVisibility(isServiceSectionVisible);
 		}
@@ -138,6 +142,18 @@ document
 		updateDoc(homepageDocRef, {
 			showAboutUsSection: isVisible,
 		});
+	});
+document
+	.getElementById("toggleWhyChooseUs")
+	.addEventListener("change", function () {
+		const form = document.getElementById("whychooseus-content-form");
+		const isVisible = this.checked;
+		form.style.display = isVisible ? "block" : "none";
+
+		updateDoc(homepageDocRef, {
+			showWhyUsSection: isVisible,
+		});
+		console.log("a");
 	});
 
 document
@@ -166,6 +182,10 @@ document
 
 function toggleAboutUsFormVisibility(isVisible) {
 	const form = document.getElementById("aboutus-content-form");
+	form.style.display = isVisible ? "block" : "none";
+}
+function toggleWhyUsFormVisibility(isVisible) {
+	const form = document.getElementById("whychooseus-content-form");
 	form.style.display = isVisible ? "block" : "none";
 }
 function toggleProductFormVisibility(isVisible) {
@@ -299,6 +319,94 @@ addAboutUsPointButton.addEventListener("click", () => {
 
 	aboutUsPointsContainer.appendChild(newPointDiv);
 });
+
+function populateWhyUsForm(docSnapshot) {
+	const whyUsData = docSnapshot.data();
+	document.getElementById("whyUsCaption").value = whyUsData.whyUScaption || "";
+	for (let i = 1; i <= 4; i++) {
+		document.getElementById(`whyUsTitle${i}`).value =
+			whyUsData[`whyUsTitle${i}`] || "";
+		document.getElementById(`whyUsDescription${i}`).value =
+			whyUsData[`whyUsDescription${i}`] || "";
+	}
+}
+
+document
+	.getElementById("whychooseusSubmit")
+	.addEventListener("click", async function (event) {
+		event.preventDefault();
+		const whyUsCaption = document.getElementById("whyUsCaption").value;
+		const whyUsTitle1 = document.getElementById("whyUsTitle1").value;
+		const whyUsDescription1 =
+			document.getElementById("whyUsDescription1").value;
+		const whyUsTitle2 = document.getElementById("whyUsTitle2").value;
+		const whyUsDescription2 =
+			document.getElementById("whyUsDescription2").value;
+		const whyUsTitle3 = document.getElementById("whyUsTitle3").value;
+		const whyUsDescription3 =
+			document.getElementById("whyUsDescription3").value;
+		const whyUsTitle4 = document.getElementById("whyUsTitle4").value;
+		const whyUsDescription4 =
+			document.getElementById("whyUsDescription4").value;
+
+		if (
+			!whyUsCaption ||
+			!whyUsTitle1 ||
+			!whyUsDescription1 ||
+			!whyUsTitle2 ||
+			!whyUsDescription2 ||
+			!whyUsTitle3 ||
+			!whyUsDescription3 ||
+			!whyUsTitle4 ||
+			!whyUsDescription4
+		) {
+			alert("Please fill in all fields.");
+			return;
+		}
+		const imageFile = document.getElementById("whyUsImage").files[0];
+		if (!imageFile) {
+			alert("Please select an image.");
+			return;
+		}
+		const storageRef = ref(storage, "totfd/whyUs/" + imageFile.name);
+		const uploadTask = uploadBytes(storageRef, imageFile);
+
+		uploadTask
+			.then((snapshot) => {
+				return getDownloadURL(snapshot.ref);
+			})
+			.then((imageUrl) => {
+				const whyUsData = {
+					whyUScaption: whyUsCaption,
+					whyUsTitle1: whyUsTitle1,
+					whyUsDescription1: whyUsDescription1,
+					whyUsTitle2: whyUsTitle2,
+					whyUsDescription2: whyUsDescription2,
+					whyUsTitle3: whyUsTitle3,
+					whyUsDescription3: whyUsDescription3,
+					whyUsTitle4: whyUsTitle4,
+					whyUsDescription4: whyUsDescription4,
+					whyUsimageUrl: imageUrl,
+				};
+
+				return updateDoc(homepageDocRef, whyUsData);
+			})
+			.then(() => {
+				console.log("Image uploaded and data saved successfully!");
+				messageElement.textContent =
+					"Why Us Data updated successfully! Go to Home Page and Refresh to see the changes.";
+				messageElement.style.color = "green";
+				messageElement.style.display = "block";
+				window.scrollTo(0, 0);
+			})
+			.catch((error) => {
+				console.error("Error uploading image or saving data:", error);
+				messageElement.textContent = "Error updating data. Please try again.";
+				messageElement.style.color = "red";
+				messageElement.style.display = "block";
+				window.scrollTo(0, 0);
+			});
+	});
 
 const serviceContentForm = document.getElementById("service-content-form");
 const serviceCaptionInput = document.getElementById("ourServicesCaption");
@@ -1048,6 +1156,7 @@ function populateFormFields() {
 				homePageCaptionInput.value = data.homePageCaption || "";
 				footerMessageInput.value = data.footerMessage || "";
 				populateAboutUsForm(docSnapshot);
+				populateWhyUsForm(docSnapshot);
 			}
 		})
 		.catch((error) => {
