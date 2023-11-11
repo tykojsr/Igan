@@ -74,8 +74,6 @@ if (homepageData && homepageData.showProductSection === true) {
 		Object.keys(productsData).length > 0 &&
 		productsData.productCaption
 	) {
-		const moreLink = document.getElementById("more");
-		moreLink.style.display = "block";
 		const productsLink = document.getElementById("products");
 		productsLink.style.display = "block";
 		const productsLink2 = document.getElementById("products2");
@@ -167,12 +165,12 @@ async function applyFontFamilyAndLogoToNavbar() {
 			const footerMessage = document.getElementById("footerMessage");
 
 			var element = document.querySelector(".bg-header");
-			console.log(element);
+			//console.log(element);
 			const homepageImageUrl = homepageData.homePageimageurl;
 			if (homepageImageUrl && element) {
 				element.style.background = `linear-gradient(rgba(9, 30, 62, 0.7), rgba(9, 30, 62, 0.7)), url('${homepageImageUrl}') center center no-repeat`;
 				element.style.backgroundSize = "cover";
-				console.log(homepageImageUrl);
+				//console.log(homepageImageUrl);
 			}
 
 			if (homepageData && homepageData.footerMessage !== undefined) {

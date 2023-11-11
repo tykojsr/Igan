@@ -3,60 +3,6 @@
 	<head>
 		<meta charset="utf-8" />
 		<title>Contact Us</title>
-		<!-- Start of Async Drift Code -->
-		<script>
-			"use strict";
-
-			!(function () {
-				var t = (window.driftt = window.drift = window.driftt || []);
-				if (!t.init) {
-					if (t.invoked)
-						return void (
-							window.console &&
-							console.error &&
-							console.error("Drift snippet included twice.")
-						);
-					(t.invoked = !0),
-						(t.methods = [
-							"identify",
-							"config",
-							"track",
-							"reset",
-							"debug",
-							"show",
-							"ping",
-							"page",
-							"hide",
-							"off",
-							"on",
-						]),
-						(t.factory = function (e) {
-							return function () {
-								var n = Array.prototype.slice.call(arguments);
-								return n.unshift(e), t.push(n), t;
-							};
-						}),
-						t.methods.forEach(function (e) {
-							t[e] = t.factory(e);
-						}),
-						(t.load = function (t) {
-							var e = 3e5,
-								n = Math.ceil(new Date() / e) * e,
-								o = document.createElement("script");
-							(o.type = "text/javascript"),
-								(o.async = !0),
-								(o.crossorigin = "anonymous"),
-								(o.src =
-									"https://js.driftt.com/include/" + n + "/" + t + ".js");
-							var i = document.getElementsByTagName("script")[0];
-							i.parentNode.insertBefore(o, i);
-						});
-				}
-			})();
-			drift.SNIPPET_VERSION = "0.3.1";
-			drift.load("5g42c97are8k");
-		</script>
-		<!-- End of Async Drift Code -->
 		<meta
 			content="width=device-width, initial-scale=1.0"
 			name="viewport" />
@@ -210,6 +156,13 @@
 							>Payments</a
 						>
 						<a
+							href="./products.html"
+							class="nav-item nav-link"
+							id="products"
+							style="display: none"
+							>Our Products</a
+						>
+						<a
 							href="./contact.html"
 							class="nav-item nav-link active"
 							>Contact Us</a
@@ -247,13 +200,6 @@
 									style="display: none"
 									>Careers</a
 								>
-								<a
-									href="./products.html"
-									class="dropdown-item"
-									id="products"
-									style="display: none"
-									>Our Products</a
-								>
 								<!-- <a href="testimonial.html" class="dropdown-item">Testimonial</a> -->
 							</div>
 						</div>
@@ -285,9 +231,14 @@
 									>Leads</a
 								>
 								<a
+									href="./paymentLeads.html"
+									class="dropdown-item"
+									>Payments Leads</a
+								>
+								<a
 									href="./careerLeads.html"
 									class="dropdown-item"
-									>Career Leads</a
+									>Career Applicants</a
 								>
 								<a
 									href="./add-gallery.html"
@@ -343,11 +294,6 @@
 									href="uploadClient.html"
 									class="dropdown-item"
 									>Manage Clients</a
-								>
-								<a
-									href="./paymentLeads.html"
-									class="dropdown-item"
-									>Manage Payments</a
 								>
 								<a
 									href="./uploadFounder.html"

@@ -261,6 +261,13 @@
 							>Payments</a
 						>
 						<a
+							href="./products.html"
+							class="nav-item nav-link"
+							id="products"
+							style="display: none"
+							>Our Products</a
+						>
+						<a
 							href="./contact.html"
 							class="nav-item nav-link"
 							>Contact Us</a
@@ -298,13 +305,6 @@
 									style="display: none"
 									>Careers</a
 								>
-								<a
-									href="./products.html"
-									class="dropdown-item"
-									id="products"
-									style="display: none"
-									>Our Products</a
-								>
 								<!-- <a href="testimonial.html" class="dropdown-item">Testimonial</a> -->
 							</div>
 						</div>
@@ -336,9 +336,14 @@
 									>Leads</a
 								>
 								<a
+									href="./paymentLeads.html"
+									class="dropdown-item"
+									>Payments Leads</a
+								>
+								<a
 									href="./careerLeads.html"
 									class="dropdown-item"
-									>Career Leads</a
+									>Career Applicants</a
 								>
 								<a
 									href="./add-gallery.html"
@@ -394,11 +399,6 @@
 									href="uploadClient.html"
 									class="dropdown-item"
 									>Manage Clients</a
-								>
-								<a
-									href="./uploadPayment.html"
-									class="dropdown-item"
-									>Manage Payments</a
 								>
 								<a
 									href="./uploadFounder.html"
@@ -542,7 +542,8 @@
 							<input
 								type="text"
 								id="founderName"
-								class="form-control" />
+								class="form-control"
+								required />
 							<span
 								class="alert alert-danger"
 								id="nameError"
@@ -555,7 +556,8 @@
 							<input
 								type="text"
 								id="founderDesignation"
-								class="form-control" />
+								class="form-control"
+								required />
 							<span
 								class="alert alert-danger"
 								id="designationError"
@@ -569,7 +571,8 @@
 								cols="6"
 								rows="3"
 								id="founderDescription"
-								class="form-control"></textarea>
+								class="form-control"
+								required></textarea>
 							<span
 								class="alert alert-danger"
 								id="descriptionError"
@@ -582,7 +585,8 @@
 							<input
 								class="form-control"
 								type="file"
-								id="imageFile" />
+								id="imageFile"
+								required />
 						</div>
 						<div id="message"></div>
 						<div
@@ -603,6 +607,14 @@
 									type="button"
 									class="btn btn-primary">
 									Update
+								</button>
+							</div>
+							<div class="form-group mt-3">
+								<button
+									id="deleteButton"
+									type="button"
+									class="btn btn-primary">
+									Delete
 								</button>
 							</div>
 							<div class="form-group mt-3">

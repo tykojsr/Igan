@@ -86,17 +86,17 @@ document.addEventListener("DOMContentLoaded", function () {
 		if (isValid) {
 			saveDataToFirebase();
 
-			emailjs.init("crpJLdnvwLUGcZ7go");
+			emailjs.init("JTY4AgqlIFsk1U50h");
 			const templateParams = {
-				to_email: "vishnukramakrishnan32@gmail.com",
 				from_name: nameInput.value.trim(),
 				from_email: emailInput.value.trim() || "Not Provided",
 				mobile_number: mobileInput.value.trim() || "Not Provided",
 				subject: subjectInput.value.trim(),
 				message: commentsInput.value.trim(),
+				referenceImage: null,
 			};
 			emailjs
-				.send("service_6jdnwub", "template_ggn1pxs", templateParams)
+				.send("service_uo9qc2y", "template_bw8p8t5", templateParams)
 				.then(function (response) {
 					console.log("Email sent:", response);
 					form.reset();

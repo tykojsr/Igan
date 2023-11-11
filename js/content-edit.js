@@ -5,7 +5,12 @@ import {
 	getDoc,
 	updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
-import { firestore } from "../js/firebase-config.js";
+import {
+	getDownloadURL,
+	ref,
+	uploadBytes,
+} from "https://www.gstatic.com/firebasejs/10.3.1/firebase-storage.js";
+import { firestore, storage } from "../js/firebase-config.js";
 
 const totfdCollection = collection(firestore, "totfd");
 const homepageDocRef = doc(totfdCollection, "Homepage");
@@ -101,7 +106,7 @@ const addAboutUsPointButton = document.getElementById("addAboutUsPoint");
 
 async function checkToggleData() {
 	getDoc(homepageDocRef).then((docSnapshot) => {
-		if (docSnapshot.exists) {
+		if (docSnapshot.exists && docSnapshot.data()) {
 			const data = docSnapshot.data();
 			const isAboutUsSectionVisible = data.showAboutUsSection || false;
 			const isProductSectionVisible = data.showProductSection || false;
@@ -250,7 +255,7 @@ function createPointDiv(pointText) {
 	pointDiv.classList.add("about-us-point");
 	pointDiv.innerHTML = `
     Point: <input type="text" class="form-control border border-primary" value="${pointText}" />
-    <input type="button" class="btn btn-primary delete-point" value="Delete" />`;
+    <input type="button" class="btn btn-primary delete-point red-button" value="Delete" />`;
 
 	const deleteButton = pointDiv.querySelector(".delete-point");
 	deleteButton.addEventListener("click", async () => {
@@ -362,10 +367,19 @@ function populateServicesForm(docSnapshot) {
 		// Clear existing services
 		allOurServices.innerHTML = "";
 
-		servicesData.services.forEach((service) => {
-			createServiceDiv(service.title, service.description);
-			//console.log(service.title, service.description);
-		});
+		if (
+			servicesData.hasOwnProperty("services") &&
+			Array.isArray(servicesData.services)
+		) {
+			servicesData.services.forEach((service) => {
+				createServiceDiv(service.title, service.description);
+				//console.log(service.title, service.description);
+			});
+		} else {
+			console.log(
+				"The 'services' property does not exist or is not an array in servicesData."
+			);
+		}
 	}
 }
 
@@ -398,7 +412,7 @@ function createServiceDiv(title, description) {
 	  Service Description: <input type="text" placeholder="Service Description" class="form-control border-2 border border-primary" value="${
 			description || ""
 		}" />
-	  <input type="button" class="btn btn-primary delete-service" value="Delete" />
+	  <input type="button" class="btn btn-primary delete-service red-button" value="Delete" />
 	`;
 
 	//console.log(description);
@@ -429,7 +443,6 @@ addServiceButton.addEventListener("click", () => {
 	const newServiceDiv = document.createElement("div");
 	newServiceDiv.classList.add("service");
 
-	// Create input elements for the service title and description
 	const titleInput = document.createElement("input");
 	titleInput.type = "text";
 	titleInput.classList.add(
@@ -489,39 +502,101 @@ addServiceButton.addEventListener("click", () => {
 	allOurServices.appendChild(newServiceDiv);
 });
 const productContentForm = document.getElementById("products-content-form");
-const productCaptionInput = document.getElementById("ourProductsCaption");
-const allOurProducts = document.getElementById("allourProducts");
-const addProductsButton = document.getElementById("addProduct");
 
-function saveProductsData() {
-	const ProductData = collectProductsFormData();
-
-	// Save the data to Firebase
-	updateDoc(productsAndServicesDocRef, ProductData)
-		.then(() => {
-			console.log(
-				"Products data saved successfully!Go to Home Page and Refresh to see the changes."
-			);
-			console.log(ProductData);
-			messageElement.textContent = "Product Data updated successfully!";
-			messageElement.style.color = "green";
-			messageElement.style.display = "block";
-			window.scrollTo(0, 0);
-		})
-		.catch((error) => {
-			console.error("Error saving data: ", error);
-			messageElement.textContent = "Error updating data. Please try again.";
-			messageElement.style.color = "red";
-			messageElement.style.display = "block";
-			window.scrollTo(0, 0);
-		});
+function saveCategoriesData() {
+	const productsDataPromise = collectCategoriesFormData();
+	if (productsDataPromise) {
+		productsDataPromise
+			.then((productsData) => {
+				return updateDoc(productsAndServicesDocRef, productsData);
+			})
+			.then(() => {
+				console.log(
+					"Product data saved successfully! Go to Home Page and Refresh to see the changes."
+				);
+				console.log(productsDataPromise);
+				messageElement.textContent = "Product Data updated successfully!";
+				messageElement.style.color = "green";
+				messageElement.style.display = "block";
+				window.scrollTo(0, 0);
+			})
+			.catch((error) => {
+				console.error("Error saving data: ", error);
+				messageElement.textContent = "Error updating data. Please try again.";
+				messageElement.style.color = "red";
+				messageElement.style.display = "block";
+				window.scrollTo(0, 0);
+			});
+	}
 }
-function collectProductsFormData() {
-	const productsData = {
-		productCaption: document.getElementById("ourProductsCaption").value,
-		products: [], // Initialize with an empty array
-	};
-	const productElements = document.querySelectorAll(".product");
+
+function collectCategoriesFormData() {
+	return new Promise((resolve, reject) => {
+		const categoriesData = {
+			productCaption: ourProductsCaption.value,
+			categories: [],
+		};
+
+		const categoryElements = document.querySelectorAll(".category");
+		const promises = [];
+
+		categoryElements.forEach((categoryElement) => {
+			const categoryNameInput = categoryElement.querySelector(
+				"input[placeholder='Category Name']"
+			);
+			const originalPlaceholder = "Category Name";
+			const styleElement = document.createElement("style");
+			styleElement.textContent = `
+  .error-input {
+    border: 2px solid red;
+    color: red;
+  }
+`;
+			document.head.appendChild(styleElement);
+			if (categoryNameInput.value.trim() === "") {
+				categoryNameInput.classList.add("error-input");
+				categoryNameInput.setAttribute(
+					"placeholder",
+					"Category Name cannot be empty"
+				);
+				return;
+			} else {
+				categoryNameInput.classList.remove("error-input");
+				categoryNameInput.setAttribute("placeholder", originalPlaceholder);
+			}
+
+			const categoryProductsDiv =
+				categoryElement.querySelector(".category-products");
+			const productsDataPromise = collectProductsData(categoryProductsDiv);
+
+			promises.push(
+				productsDataPromise.then((productsData) => {
+					const category = {
+						name: categoryNameInput.value,
+						products: productsData,
+					};
+					categoriesData.categories.push(category);
+				})
+			);
+		});
+
+		Promise.all(promises)
+			.then(() => {
+				resolve(categoriesData);
+			})
+			.catch((error) => {
+				reject(error);
+			});
+	});
+}
+
+async function collectProductsData(categoryProductsDiv) {
+	const productsData = [];
+
+	const productElements = categoryProductsDiv.querySelectorAll(".product");
+
+	const uploadPromises = [];
+
 	productElements.forEach((productElement) => {
 		const productTitleInput = productElement.querySelector(
 			"input[placeholder='Product Title']"
@@ -529,101 +604,358 @@ function collectProductsFormData() {
 		const productDescInput = productElement.querySelector(
 			"input[placeholder='Product Description']"
 		);
+		const imageInput = productElement.querySelector("input[type='file']");
+		const imagePreview = productElement.querySelector(".image-preview");
+		const imageUrl = productElement.querySelector(".preview-image")?.src || "";
 
-		//console.log(serviceTitleInput);
-		//console.log(serviceDescInput);
-		const product = {
-			title: productTitleInput.value,
-			description: productDescInput.value,
-		};
-
-		productsData.products.push(product);
+		if (imageInput.style.display !== "none" && imageInput.files[0]) {
+			const uploadPromise = uploadImageToFirebaseStorage(
+				imageInput.files[0]
+			).then((imageUrl) => {
+				const product = {
+					title: productTitleInput.value,
+					description: productDescInput.value,
+					imageUrl: imageUrl,
+				};
+				productsData.push(product);
+			});
+			uploadPromises.push(uploadPromise);
+		} else if (imageUrl) {
+			const product = {
+				title: productTitleInput.value,
+				description: productDescInput.value,
+				imageUrl: imageUrl,
+			};
+			productsData.push(product);
+		}
 	});
+
+	await Promise.all(uploadPromises);
 	return productsData;
 }
 
+async function uploadImageToFirebaseStorage(imageFile) {
+	const storageRef = ref(storage, "totfd/products/" + imageFile.name);
+	try {
+		await uploadBytes(storageRef, imageFile);
+		const imageUrl = await getDownloadURL(storageRef);
+		return imageUrl;
+	} catch (error) {
+		console.error("Error uploading image:", error);
+		return null;
+	}
+}
+
 productContentForm.addEventListener("submit", function (e) {
-	e.preventDefault(); // Prevent the default form submission
-	saveProductsData(); // Call the function to save data
+	e.preventDefault();
+	saveCategoriesData();
 });
 
-function populateProductsForm(docSnapshot) {
-	if (docSnapshot.exists()) {
-		const productData = docSnapshot.data();
-		productCaptionInput.value = productData.productCaption || "";
+const deleteProduct = async (categoryProductsDiv, productName) => {
+	const productDiv = Array.from(categoryProductsDiv.children).find(
+		(child) => child.querySelector("input[type='text']").value === productName
+	);
 
-		allOurProducts.innerHTML = "";
-		if (productData.products && Array.isArray(productData.products)) {
-			productData.products.forEach((product) => {
-				createProductDiv(product.title, product.description);
+	if (productDiv) {
+		categoryProductsDiv.removeChild(productDiv);
+
+		try {
+			const categoryDiv = categoryProductsDiv.parentNode;
+			const categoryNameInput =
+				categoryDiv.querySelector("input[type='text']").value;
+
+			const categoriesSnapshot = await getDoc(productsAndServicesDocRef);
+			const categoriesData = categoriesSnapshot.data().categories;
+
+			const updatedCategories = categoriesData.map((category) => {
+				if (category.name === categoryNameInput) {
+					const updatedProducts = category.products.filter(
+						(product) => product.title !== productName
+					);
+					return { ...category, products: updatedProducts };
+				}
+				return category;
 			});
+
+			await updateDoc(productsAndServicesDocRef, {
+				categories: updatedCategories,
+			});
+
+			console.log("Product deleted from Firestore successfully!");
+		} catch (error) {
+			console.error("Error deleting product from Firestore: ", error);
 		}
+	} else {
+		console.error("Product not found in the DOM!");
 	}
-}
+};
 
-async function deleteProductFromFirestore(title, description) {
-	try {
-		const productToRemove = {
-			title: title,
-			description: description,
-		};
-		console.log(productToRemove);
+function populateProductsFromFirebase(docSnapshot) {
+	const productData = docSnapshot.data();
+	console.log(productData.productCaption);
+	console.log(productData.categories);
+	const productCaption = productData.productCaption;
+	const categories = productData.categories;
+	const productCaptionInput = document.getElementById("ourProductsCaption");
+	productCaptionInput.value = productCaption;
 
-		await updateDoc(productsAndServicesDocRef, {
-			products: arrayRemove(productToRemove),
+	const categorySection = document.getElementById("categorySection");
+	categories.forEach((category) => {
+		const newCategoryDiv = document.createElement("div");
+		newCategoryDiv.classList.add("category");
+
+		const categoryNameInput = document.createElement("input");
+		categoryNameInput.type = "text";
+		categoryNameInput.classList.add(
+			"form-control",
+			"border-2",
+			"border",
+			"border-primary"
+		);
+		categoryNameInput.placeholder = "Category Name";
+		categoryNameInput.value = category.name;
+
+		const addProductUnderCategoryButton = document.createElement("button");
+		addProductUnderCategoryButton.textContent = "+ Add Products";
+		addProductUnderCategoryButton.classList.add("btn", "btn-primary", "mt-1");
+		addProductUnderCategoryButton.addEventListener("click", (e) => {
+			e.preventDefault();
+			addProductUnderCategory(newCategoryDiv);
+			e.stopPropagation();
 		});
 
-		console.log(
-			"Product deleted from Firestore successfully!Go to Home Page and Refresh to see the changes."
-		);
+		const deleteCategoryButton = document.createElement("button");
+		deleteCategoryButton.textContent = "Delete";
+		deleteCategoryButton.classList.add("btn", "btn-danger", "mt-1");
+		deleteCategoryButton.addEventListener("click", (e) => {
+			e.preventDefault();
+			deleteCategory(newCategoryDiv);
+			e.stopPropagation();
+		});
+		const categoryProductsDiv = document.createElement("div");
+		categoryProductsDiv.classList.add("category-products");
+
+		// Populate the products within the category
+		category.products.forEach((product) => {
+			const newProductDiv = document.createElement("div");
+			newProductDiv.classList.add("product");
+
+			const titleInput = document.createElement("input");
+			titleInput.type = "text";
+			titleInput.classList.add(
+				"form-control",
+				"border-2",
+				"border",
+				"border-primary"
+			);
+			titleInput.placeholder = "Product Title";
+			titleInput.value = product.title;
+
+			const descriptionInput = document.createElement("input");
+			descriptionInput.type = "text";
+			descriptionInput.classList.add(
+				"form-control",
+				"border-2",
+				"border",
+				"border-primary"
+			);
+			descriptionInput.placeholder = "Product Description";
+			descriptionInput.value = product.description;
+
+			const imageInput = document.createElement("input");
+			imageInput.type = "file";
+			imageInput.classList.add(
+				"form-control",
+				"border-2",
+				"border",
+				"border-primary"
+			);
+			imageInput.style.marginTop = "10px";
+
+			const imagePreview = document.createElement("div");
+			imagePreview.classList.add("image-preview");
+			imagePreview.style.width = "3cm";
+			imagePreview.style.height = "3cm";
+			imagePreview.style.marginTop = "10px";
+			imageInput.style.display = "none";
+
+			const changeImageButton = document.createElement("button");
+			changeImageButton.textContent = "Change Image";
+			changeImageButton.classList.add("btn", "btn-primary", "mt-1");
+			changeImageButton.addEventListener("click", (e) => {
+				e.preventDefault();
+				imageInput.style.display = "block";
+				changeImageButton.style.display = "none";
+				e.stopPropagation();
+			});
+
+			if (product.imageUrl) {
+				const imageElement = document.createElement("img");
+				imageElement.src = product.imageUrl;
+				imageElement.classList.add("preview-image");
+				imageElement.style.width = "100%";
+				imageElement.style.height = "100%";
+				imagePreview.appendChild(imageElement);
+			}
+
+			imageInput.addEventListener("change", (e) => {
+				const file = e.target.files[0];
+				const reader = new FileReader();
+				reader.onload = (event) => {
+					const imageUrl = event.target.result;
+					const imageElement = document.createElement("img");
+					imageElement.src = imageUrl;
+					imageElement.classList.add("preview-image");
+					imageElement.style.width = "100%";
+					imageElement.style.height = "100%";
+					imagePreview.innerHTML = "";
+					imagePreview.appendChild(imageElement);
+				};
+				reader.readAsDataURL(file);
+			});
+
+			const deleteButton = document.createElement("button");
+			deleteButton.textContent = "Delete";
+			deleteButton.classList.add(
+				"btn",
+				"btn-primary",
+				"delete-product",
+				"red-button"
+			);
+
+			deleteButton.addEventListener("click", () => {
+				deleteProduct(categoryProductsDiv, product.title);
+			});
+
+			newProductDiv.appendChild(document.createTextNode("Product Title: "));
+			newProductDiv.appendChild(titleInput);
+			newProductDiv.appendChild(
+				document.createTextNode("Product Description: ")
+			);
+			newProductDiv.appendChild(descriptionInput);
+			newProductDiv.appendChild(document.createTextNode("Product Image: "));
+			newProductDiv.appendChild(imagePreview);
+			newProductDiv.appendChild(changeImageButton);
+			newProductDiv.appendChild(imageInput);
+			newProductDiv.appendChild(deleteButton);
+
+			categoryProductsDiv.appendChild(newProductDiv);
+		});
+
+		newCategoryDiv.appendChild(document.createTextNode("Category Name: "));
+		newCategoryDiv.appendChild(categoryNameInput);
+		newCategoryDiv.appendChild(addProductUnderCategoryButton);
+		newCategoryDiv.appendChild(deleteCategoryButton);
+		newCategoryDiv.appendChild(categoryProductsDiv);
+
+		categorySection.appendChild(newCategoryDiv);
+	});
+}
+
+const deleteCategory = (categoryDiv) => {
+	const categoryNameInput = categoryDiv.querySelector("input[type='text']");
+
+	const categoryName = categoryNameInput.value;
+
+	deleteCategoryFromFirestore(categoryName);
+
+	const categorySection = document.getElementById("categorySection");
+	categorySection.removeChild(categoryDiv);
+};
+async function deleteCategoryFromFirestore(categoryName) {
+	try {
+		const doc = await getDoc(productsAndServicesDocRef);
+		if (doc.exists()) {
+			const categoriesData = doc.data().categories;
+
+			const index = categoriesData.findIndex(
+				(category) => category.name === categoryName
+			);
+
+			if (index !== -1) {
+				categoriesData.splice(index, 1);
+				await updateDoc(productsAndServicesDocRef, {
+					categories: categoriesData,
+				});
+
+				console.log(
+					"Category deleted from Firestore successfully! Go to Home Page and Refresh to see the changes."
+				);
+				messageElement.textContent =
+					"Product Category Data Deleted successfully!";
+				messageElement.style.color = "green";
+				messageElement.style.display = "block";
+				window.scrollTo(0, 0);
+			} else {
+				console.log("Category not found in Firestore.");
+			}
+		} else {
+			console.log("Document not found in Firestore.");
+		}
 	} catch (error) {
-		console.error("Error deleting Product from Firestore: ", error);
+		console.error("Error deleting Category from Firestore: ", error);
 	}
 }
 
-function createProductDiv(title, description) {
-	const productDiv = document.createElement("div");
-	productDiv.classList.add("product");
+const categorySection = document.getElementById("categorySection");
 
-	productDiv.innerHTML = `
-    <p>Product Title: <input type="text" placeholder = "Product Title" class="form-control border-2 border border-primary" value="${
-			title || ""
-		}" /></p>
-    Product Description: <input type="text" placeholder = "Product Description" class="form-control border-2 border border-primary" value="${
-			description || ""
-		}" />
-    <input type="button" class="btn btn-primary delete-product" value="Delete" />
-  `;
+const createCategory = () => {
+	const newCategoryDiv = document.createElement("div");
+	newCategoryDiv.classList.add("category");
 
-	const deleteButton = productDiv.querySelector(".delete-product");
-	deleteButton.addEventListener("click", async () => {
-		const titleInput = productDiv.querySelector(
-			"input[placeholder='Product Title']"
-		);
-		const descriptionInput = productDiv.querySelector(
-			"input[placeholder='Product Description']"
-		);
-		//location.reload();
-		console.log(titleInput);
-		console.log(descriptionInput);
-		await deleteProductFromFirestore(titleInput.value, descriptionInput.value);
+	const categoryNameInput = document.createElement("input");
+	categoryNameInput.type = "text";
+	categoryNameInput.classList.add(
+		"form-control",
+		"border-2",
+		"border",
+		"border-primary"
+	);
+	categoryNameInput.placeholder = "Category Name";
 
-		productDiv.remove();
-		messageElement.textContent =
-			"Product Deleted successfully!Go to Home Page and Refresh to see the changes.";
-		messageElement.style.color = "green";
-		messageElement.style.display = "block";
-		window.scrollTo(0, 0);
+	const errorMessageSpan = document.createElement("span");
+	errorMessageSpan.classList.add("error-message");
+	errorMessageSpan.style.color = "red";
+	errorMessageSpan.style.display = "none";
+	errorMessageSpan.textContent = "Category Name cannot be empty";
+
+	categoryNameInput.appendChild(errorMessageSpan);
+
+	const addProductUnderCategoryButton = document.createElement("button");
+	addProductUnderCategoryButton.textContent = "+ Add Products";
+	addProductUnderCategoryButton.classList.add("btn", "btn-primary", "mt-1");
+	addProductUnderCategoryButton.addEventListener("click", (e) => {
+		e.preventDefault();
+		addProductUnderCategory(newCategoryDiv);
+		e.stopPropagation();
 	});
-	allOurProducts.appendChild(productDiv);
-}
-// Add a click event listener to the button
-addProductsButton.addEventListener("click", () => {
-	// Create a new div for the service
+
+	const deleteCategoryButton = document.createElement("button");
+	deleteCategoryButton.textContent = "Delete";
+	deleteCategoryButton.classList.add("btn", "btn-danger", "mt-1");
+	deleteCategoryButton.addEventListener("click", (e) => {
+		e.preventDefault();
+		deleteCategory(newCategoryDiv);
+		e.stopPropagation();
+	});
+	const categoryProductsDiv = document.createElement("div");
+	categoryProductsDiv.classList.add("category-products");
+
+	newCategoryDiv.appendChild(document.createTextNode("Category Name: "));
+	newCategoryDiv.appendChild(categoryNameInput);
+	newCategoryDiv.appendChild(addProductUnderCategoryButton);
+	newCategoryDiv.appendChild(deleteCategoryButton);
+	newCategoryDiv.appendChild(categoryProductsDiv);
+
+	categorySection.appendChild(newCategoryDiv);
+};
+
+const addProductUnderCategory = (categoryDiv) => {
+	const categoryProductsDiv = categoryDiv.querySelector(".category-products");
+
 	const newProductDiv = document.createElement("div");
 	newProductDiv.classList.add("product");
 
-	// Create input elements for the service title and description
 	const titleInput = document.createElement("input");
 	titleInput.type = "text";
 	titleInput.classList.add(
@@ -644,42 +976,67 @@ addProductsButton.addEventListener("click", () => {
 	);
 	descriptionInput.placeholder = "Product Description";
 
-	// Create a delete button
-	const deleteButton = document.createElement("input");
-	deleteButton.type = "button";
+	const imagePreview = document.createElement("div");
+	imagePreview.classList.add("image-preview");
+	imagePreview.style.width = "3cm";
+	imagePreview.style.height = "3cm";
+	imagePreview.style.marginBottom = "10px";
+
+	const imageInput = document.createElement("input");
+	imageInput.type = "file";
+	imageInput.classList.add(
+		"form-control",
+		"border-2",
+		"border",
+		"border-primary"
+	);
+
+	imageInput.addEventListener("change", (e) => {
+		const file = e.target.files[0];
+		const reader = new FileReader();
+		reader.onload = (event) => {
+			const imageUrl = event.target.result;
+			const imageElement = document.createElement("img");
+			imageElement.src = imageUrl;
+			imageElement.classList.add("preview-image");
+			imageElement.style.width = "100%";
+			imageElement.style.height = "100%";
+			imagePreview.innerHTML = "";
+			imagePreview.appendChild(imageElement);
+		};
+		reader.readAsDataURL(file);
+	});
+
+	const deleteButton = document.createElement("button");
+	deleteButton.textContent = "Delete";
 	deleteButton.classList.add(
 		"btn",
 		"btn-primary",
 		"delete-product",
 		"red-button"
 	);
-	deleteButton.value = "Delete";
 
-	// Add a click event listener to the delete button
-	deleteButton.addEventListener("click", async () => {
-		const titleInput = newProductDiv
-			.querySelector("input[placeholder='Product Title']")
-			.value.trim();
-		const descriptionInput = newProductDiv
-			.querySelector("input[placeholder='Product Description']")
-			.value.trim();
-		await deleteProductFromFirestore(titleInput.value, descriptionInput.value);
-		allOurProducts.removeChild(newProductDiv);
-		messageElement.textContent =
-			"Product Data Deleted successfully!Go to Home Page and Refresh to see the changes.";
-		messageElement.style.color = "green";
-		messageElement.style.display = "block";
-		window.scrollTo(0, 0);
+	deleteButton.addEventListener("click", (e) => {
+		e.preventDefault();
+		const productTitle = titleInput.value;
+		deleteProduct(categoryProductsDiv, productTitle);
+		e.stopPropagation();
 	});
 
 	newProductDiv.appendChild(document.createTextNode("Product Title: "));
 	newProductDiv.appendChild(titleInput);
 	newProductDiv.appendChild(document.createTextNode("Product Description: "));
 	newProductDiv.appendChild(descriptionInput);
+	newProductDiv.appendChild(document.createTextNode("Product Image: "));
+	newProductDiv.appendChild(imagePreview);
+	newProductDiv.appendChild(imageInput);
 	newProductDiv.appendChild(deleteButton);
 
-	allOurProducts.appendChild(newProductDiv);
-});
+	categoryProductsDiv.appendChild(newProductDiv);
+};
+
+const addCategoryButton = document.getElementById("addCategory");
+addCategoryButton.addEventListener("click", createCategory);
 
 function populateFormFields() {
 	getDoc(homepageDocRef)
@@ -699,8 +1056,8 @@ function populateFormFields() {
 	getDoc(productsAndServicesDocRef)
 		.then((docSnapshot) => {
 			if (docSnapshot.exists()) {
+				populateProductsFromFirebase(docSnapshot);
 				populateServicesForm(docSnapshot);
-				populateProductsForm(docSnapshot);
 			}
 		})
 		.catch((error) => {

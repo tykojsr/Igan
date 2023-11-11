@@ -10,7 +10,6 @@ const totfd = collection(firestore, "totfd");
 const totfdDoc = doc(totfd, "totfdDoc");
 const careerLeadsCollection = collection(totfdDoc, "careerLeadsData");
 
-// Function to populate careers on the careers page
 var vendorSection = document.getElementById("vendorSection");
 async function populateCareers() {
 	const postListContainer = document.querySelector(".post-list");
@@ -18,8 +17,12 @@ async function populateCareers() {
 
 	const careersData = JSON.parse(sessionStorage.getItem("careersData"));
 
-	if (careersData) {
-		careersData.forEach((career) => {
+	const filteredCareersData = careersData.filter(
+		(career) => career.displayed === true
+	);
+
+	if (filteredCareersData) {
+		filteredCareersData.forEach((career) => {
 			const singlePost = document.createElement("div");
 			singlePost.classList.add("single-post", "d-flex", "flex-row");
 

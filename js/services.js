@@ -34,9 +34,9 @@ async function populateServiceContainer() {
 		const serviceIcon = document.createElement("div");
 		serviceIcon.className = "service-icon";
 		const icon = document.createElement("i");
-		icon.className = service.icon;
+		icon.className = "fa fa-gift";
 		icon.classList.add("text-white");
-		icon.textContent = service.title.charAt(0);
+		//icon.textContent = service.title.charAt(0);
 		icon.style.fontSize = "24px";
 		icon.style.fontWeight = "bold";
 		serviceIcon.appendChild(icon);

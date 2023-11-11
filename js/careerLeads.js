@@ -20,7 +20,7 @@ function populateLeadsTable(leads) {
 	tbody.innerHTML = "";
 
 	// Create an array of status options for the dropdown
-	const statusOptions = ["Accepted", "Rejected"];
+	const statusOptions = ["New","Processing","Accepted", "Rejected","Hired"];
 
 	// Loop through the leads data and create table rows
 	leads.forEach((lead) => {
@@ -31,7 +31,6 @@ function populateLeadsTable(leads) {
 		snoCell.textContent = leadCounter;
 		row.appendChild(snoCell);
 
-		// Add cells for the other data
 		const nameCell = document.createElement("td");
 		nameCell.textContent = lead.name;
 		row.appendChild(nameCell);
@@ -52,18 +51,21 @@ function populateLeadsTable(leads) {
 		emailCell.textContent = lead.email;
 		row.appendChild(emailCell);
 
+		const PrevDesignationCell = document.createElement("td");
+		PrevDesignationCell.textContent = lead.PrevDesignation;
+		row.appendChild(PrevDesignationCell);
+
 		const designationCell = document.createElement("td");
 		designationCell.textContent = lead.designation;
 		row.appendChild(designationCell);
 
-		// Add a dropdown cell for the Status
 		const statusCell = document.createElement("td");
 		const statusSelect = document.createElement("select");
-		statusSelect.classList.add("status-select"); // Add a class for easier selection
+		statusSelect.classList.add("status-select");
 		statusOptions.forEach((option) => {
 			const optionElement = document.createElement("option");
 			optionElement.textContent = option;
-			optionElement.value = option; // Set the current status as value
+			optionElement.value = option;
 			statusSelect.appendChild(optionElement);
 		});
 
@@ -118,6 +120,48 @@ async function readAllLeads() {
 }
 
 // Function to fetch and display leads with status "New"
+async function readNewLeads() {
+	try {
+		clearLeadsTable();
+		const leadsQuery = query(
+			careerLeadsCollection,
+			where("status", "==", "New")
+		);
+		const leads = await getDocs(leadsQuery);
+		const leadsData = leads.docs.map((doc) => ({
+			...doc.data(),
+			ref: doc.ref,
+		}));
+		await populateLeadsTable(leadsData);
+		checkLeadsAndDisplay();
+		updateTotalRecordsCount();
+		return leadsData;
+	} catch (error) {
+		console.error("Error fetching new leads:", error);
+	}
+}
+
+async function readProcessingLeads() {
+	try {
+		clearLeadsTable();
+		const leadsQuery = query(
+			careerLeadsCollection,
+			where("status", "==", "Processing")
+		);
+		const leads = await getDocs(leadsQuery);
+		const leadsData = leads.docs.map((doc) => ({
+			...doc.data(),
+			ref: doc.ref,
+		}));
+		await populateLeadsTable(leadsData);
+		checkLeadsAndDisplay();
+		updateTotalRecordsCount();
+		return leadsData;
+	} catch (error) {
+		console.error("Error fetching new leads:", error);
+	}
+}
+
 async function readAcceptedLeads() {
 	try {
 		clearLeadsTable();
@@ -135,7 +179,7 @@ async function readAcceptedLeads() {
 		updateTotalRecordsCount();
 		return leadsData;
 	} catch (error) {
-		console.error("Error fetching new leads:", error);
+		console.error("Error fetching Accepted leads:", error);
 	}
 }
 
@@ -157,6 +201,27 @@ async function readRejectedLeads() {
 		return leadsData;
 	} catch (error) {
 		console.error("Error fetching rejected leads:", error);
+	}
+}
+
+async function readHiredLeads() {
+	try {
+		clearLeadsTable();
+		const leadsQuery = query(
+			careerLeadsCollection,
+			where("status", "==", "Hired")
+		);
+		const leads = await getDocs(leadsQuery);
+		const leadsData = leads.docs.map((doc) => ({
+			...doc.data(),
+			ref: doc.ref,
+		}));
+		await populateLeadsTable(leadsData);
+		checkLeadsAndDisplay();
+		updateTotalRecordsCount();
+		return leadsData;
+	} catch (error) {
+		console.error("Error fetching hired leads:", error);
 	}
 }
 
@@ -217,11 +282,20 @@ document
 	.getElementById("allLeadsButton")
 	.addEventListener("click", readAllLeads);
 document
+	.getElementById("newLeadsButton")
+	.addEventListener("click", readNewLeads);
+document
+	.getElementById("processingLeadsButton")
+	.addEventListener("click", readProcessingLeads);
+document
 	.getElementById("AcceptedLeadsButton")
 	.addEventListener("click", readAcceptedLeads);
 document
 	.getElementById("rejectedLeadsButton")
 	.addEventListener("click", readRejectedLeads);
+document
+	.getElementById("hiredLeadsButton")
+	.addEventListener("click", readHiredLeads);
 
 function generateExcelData() {
 	// Create a new Excel Workbook
@@ -235,6 +309,7 @@ function generateExcelData() {
 		"experience",
 		"Mobile Number",
 		"Email",
+		"Previous Designation",
 		"designation",
 		"Status",
 	];
