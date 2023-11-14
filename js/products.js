@@ -67,23 +67,22 @@ async function populateProductsContainer(productsData) {
 
 			cardBody.appendChild(productDescription);
 
-			const productLink = document.createElement("a");
-			productLink.className = "btn btn-lg btn-primary rounded";
-			productLink.setAttribute("href", "./contact.html");
-			const linkIcon = document.createElement("i");
-			linkIcon.className = "bi bi-arrow-right";
-			productLink.appendChild(linkIcon);
-			productLink.style.display = "none";
+			const buyButton = document.createElement("button");
+			buyButton.className = "btn btn-lg btn-success rounded";
+			buyButton.innerHTML = '<i class="bi bi-cart"></i> Buy';
 
-			cardBody.appendChild(productLink);
+			buyButton.addEventListener("click", () => {
+				const buyModal = new bootstrap.Modal(
+					document.getElementById("buyModal")
+				);
 
-			cardBody.addEventListener("mouseenter", function () {
-				productLink.style.display = "block";
+				document.getElementById("productNameInput").value = product.title;
+				document.getElementById("productImageInput").value = product.imageUrl;
+
+				buyModal.show();
 			});
 
-			cardBody.addEventListener("mouseleave", function () {
-				productLink.style.display = "none";
-			});
+			cardBody.appendChild(buyButton);
 
 			productCard.appendChild(cardBody);
 
@@ -91,6 +90,47 @@ async function populateProductsContainer(productsData) {
 		});
 	});
 }
+
+document
+	.getElementById("submitBuyForm")
+	.addEventListener("click", function (event) {
+		event.preventDefault();
+		const productName = document.getElementById("productNameInput").value;
+		const productImage = document.getElementById("productImageInput").value;
+		const name = document.getElementById("nameInput").value;
+		const email = document.getElementById("emailInput").value;
+		const mobile = document.getElementById("mobileInput").value;
+
+		if (!email && !mobile) {
+			alert("Email or Mobile Number is required.");
+			return;
+		}
+
+		emailjs.init("JTY4AgqlIFsk1U50h");
+
+		const templateParams = {
+			from_name: name,
+			from_email: email || "Not Provided",
+			mobile_number: mobile || "Not Provided",
+			subject: "Product Order",
+			message: "Product Name: " + productName,
+			referenceImage: productImage,
+		};
+
+		emailjs
+			.send("service_uo9qc2y", "template_bw8p8t5", templateParams)
+			.then(function (response) {
+				console.log("Email sent:", response);
+				document.getElementById("successMessage").style.display = "block";
+				document.getElementById("buyForm").reset();
+			})
+			.catch(function (error) {
+				console.error("Email sending failed:", error);
+			});
+
+		const buyModal = new bootstrap.Modal(document.getElementById("buyModal"));
+		buyModal.hide();
+	});
 
 function populateCategories(productsData) {
 	const categoryContainer = document.getElementById("categoryContainer");

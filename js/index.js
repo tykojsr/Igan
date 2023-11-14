@@ -9,7 +9,7 @@ import {
 	getDownloadURL,
 	listAll,
 	ref,
-	uploadBytes,
+	uploadBytesResumable,
 } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-storage.js";
 import { firestore, storage } from "./firebase-config.js";
 
@@ -729,16 +729,9 @@ document
 					console.error("Error adding document: ", error);
 				});
 			const referenceImage = document.getElementById("referenceImageInput");
-			var imageUrl = "";
+			var imageUrls = "";
 			if (referenceImage.files.length > 0) {
-				const imageFile = referenceImage.files[0];
-				const storageRef = ref(storage, "totfd/references/" + imageFile.name);
-				try {
-					await uploadBytes(storageRef, imageFile);
-					imageUrl = await getDownloadURL(storageRef);
-				} catch (error) {
-					console.error("Error uploading image:", error);
-				}
+				imageUrls = await saveImagesToFirebase(referenceImage.files);
 			}
 			emailjs.init("JTY4AgqlIFsk1U50h");
 			const templateParams = {
@@ -747,7 +740,7 @@ document
 				mobile_number: mobile || "Not Provided",
 				subject: service,
 				message: message,
-				referenceImage: imageUrl,
+				referenceImage: imageUrls.join(" ; "),
 			};
 			emailjs
 				.send("service_uo9qc2y", "template_bw8p8t5", templateParams)
@@ -759,6 +752,26 @@ document
 				});
 		}
 	});
+
+async function saveImagesToFirebase(files) {
+	const imageUrls = [];
+	const filesArray = Array.from(files); // Convert FileList to an array
+	// console.log(filesArray.length);
+
+	for (const imageFile of filesArray) {
+		const uniqueId = Date.now(); // Use a timestamp as a unique identifier
+		const imageName = `clientImages2/${uniqueId}_${imageFile.name}`;
+		const storageRef = ref(storage, imageName);
+
+		await uploadBytesResumable(storageRef, imageFile);
+		const imageUrl = await getDownloadURL(storageRef);
+		// console.log(imageUrl, storageRef);
+		imageUrls.push(imageUrl);
+	}
+
+	// console.log(imageUrls);
+	return imageUrls;
+}
 
 function validateEmail(email) {
 	const re = /\S+@\S+\.\S+/;

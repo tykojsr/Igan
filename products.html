@@ -516,6 +516,122 @@
 		</div>
 		<!-- products End -->
 
+		<!-- Buy Modal -->
+		<div
+			class="modal fade"
+			id="buyModal"
+			tabindex="-1"
+			aria-labelledby="buyModalLabel"
+			aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5
+							class="modal-title"
+							id="buyModalLabel">
+							Buy Product
+						</h5>
+						<button
+							type="button"
+							class="btn-close"
+							data-bs-dismiss="modal"
+							aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<!-- Buy Form -->
+						<form id="buyForm">
+							<div class="mb-3">
+								<label
+									for="productNameInput"
+									class="form-label"
+									>Product Name</label
+								>
+								<input
+									type="text"
+									class="form-control"
+									id="productNameInput"
+									readonly />
+							</div>
+							<div class="mb-3">
+								<label
+									for="productImageInput"
+									class="form-label"
+									>Product Image Link</label
+								>
+								<input
+									type="text"
+									class="form-control"
+									id="productImageInput"
+									readonly />
+							</div>
+							<div class="mb-3">
+								<label
+									for="nameInput"
+									class="form-label"
+									>Name</label
+								>
+								<input
+									type="text"
+									class="form-control"
+									id="nameInput"
+									required />
+							</div>
+							<div class="mb-3">
+								<label
+									for="mobileInput"
+									class="form-label"
+									>Mobile Number</label
+								>
+								<input
+									type="tel"
+									class="form-control"
+									id="mobileInput"
+									required />
+							</div>
+							<div class="mb-3">
+								<label
+									for="emailInput"
+									class="form-label"
+									>Email</label
+								>
+								<input
+									type="email"
+									class="form-control"
+									id="emailInput"
+									required />
+							</div>
+							<div class="mb-3">
+								<label
+									for="addressInput"
+									class="form-label"
+									>Address</label
+								>
+								<textarea
+									class="form-control"
+									id="addressInput"
+									rows="3"
+									required></textarea>
+							</div>
+							<button
+								type="submit"
+								class="btn btn-primary"
+								id="submitBuyForm">
+								Submit Order
+							</button>
+						</form>
+						<!-- End Buy Form -->
+						<div
+							id="successMessage"
+							class="alert alert-success mt-3"
+							style="display: none">
+							Order placed successfully! We will contact you soon.
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- End Buy Modal -->
+
 		<div
 			class="modal"
 			id="imageModal"
@@ -774,6 +890,9 @@ amet erat lorem stet eos. Diam amet et kasd eos duo.
 		<script src="lib/counterup/counterup.min.js"></script>
 		<script src="lib/owlcarousel/owl.carousel.min.js"></script>
 		<!-- <script src="https://cdn.tailwindcss.com"></script> -->
+		<script
+			type="text/javascript"
+			src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 		<!-- Template Javascript -->
 		<script
