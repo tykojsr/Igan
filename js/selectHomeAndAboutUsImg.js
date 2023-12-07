@@ -35,9 +35,10 @@ var modalImage = document.getElementById('modalImage');
 modal.style.display = 'block';
 modalImage.src = '${url}';
 "/></td>
-<td><input type="radio" name="selectedName" id="radio-${i}" value="${
+<td class="text-center"><input type="checkbox" name="selectedNames" id="checkbox-${i}" value="${
 						item.name
-					}"></td>`;
+					}"></td>
+					`;
 					// Add the row to the table body
 					document.getElementById("table-body").appendChild(row);
 				})
@@ -54,18 +55,36 @@ modalImage.src = '${url}';
 const totfdCollection = collection(firestore, "totfd");
 const Homepage = doc(totfdCollection, "Homepage");
 
-async function updateFirestoreWithSelectedURL(imageName) {
+document.getElementById("update-button").addEventListener("click", () => {
+	const selectedCheckboxes = document.querySelectorAll(
+		'input[name="selectedNames"]:checked'
+	);
+	if (selectedCheckboxes.length > 0 && selectedCheckboxes.length <= 2) {
+		selectedCheckboxes.forEach(async (selectedCheckbox, index) => {
+			const selectedImageName = selectedCheckbox.value;
+			await updateFirestoreWithSelectedURL(selectedImageName, index + 1);
+		});
+	} else {
+		document.getElementById("message").textContent =
+			"Please select 1 to 2 images.";
+		setTimeout(function () {
+			document.getElementById("message").textContent = "";
+		}, 3000);
+	}
+});
+
+async function updateFirestoreWithSelectedURL(imageName, index) {
 	try {
 		const url = await getDownloadURL(
 			ref(storage, "totfd/Home-page-images/" + imageName)
 		);
 
-		// Update Firestore with the fetched URL
 		await updateDoc(Homepage, {
-			homePageimageurl: url,
+			["homePageImageUrl" + index]: url,
 		});
 
-		document.getElementById("message").textContent = "Home Page Image updated.";
+		document.getElementById("message").textContent =
+			"Home Page Image(s) updated.";
 		window.scrollTo(0, 0);
 
 		setTimeout(function () {
@@ -75,18 +94,35 @@ async function updateFirestoreWithSelectedURL(imageName) {
 		console.error("Error updating Firestore:", error);
 	}
 }
+// Add event listener to the update button1
+
+document.getElementById("update-button1").addEventListener("click", () => {
+	const selectedCheckboxes = document.querySelectorAll(
+		'input[name="selectedNames"]:checked'
+	);
+	if (selectedCheckboxes.length === 1) {
+		const selectedImageName = selectedCheckboxes[0].value;
+		updateFirestoreWithSelectedURL1(selectedImageName);
+	} else {
+		document.getElementById("message").textContent =
+			"Please select exactly one image.";
+		setTimeout(function () {
+			document.getElementById("message").textContent = "";
+		}, 3000);
+	}
+});
+
 async function updateFirestoreWithSelectedURL1(imageName) {
 	try {
 		const url = await getDownloadURL(
 			ref(storage, "totfd/Home-page-images/" + imageName)
 		);
 
-		// Update Firestore with the fetched URL
 		await updateDoc(Homepage, {
 			aboutUsPageimageurl: url,
 		});
 
-		document.getElementById("message").textContent = "about Us Image updated.";
+		document.getElementById("message").textContent = "About Us Image updated.";
 		window.scrollTo(0, 0);
 
 		setTimeout(function () {
@@ -96,40 +132,6 @@ async function updateFirestoreWithSelectedURL1(imageName) {
 		console.error("Error updating Firestore:", error);
 	}
 }
-
-// Add event listener to the update button
-document.getElementById("update-button").addEventListener("click", () => {
-	const selectedRadio = document.querySelector(
-		'input[name="selectedName"]:checked'
-	);
-	if (selectedRadio) {
-		const selectedImageName = selectedRadio.value;
-		// Call the function to update Firestore with the selected image URL
-		updateFirestoreWithSelectedURL(selectedImageName);
-	} else {
-		document.getElementById("message").textContent = "Please select an image.";
-		setTimeout(function () {
-			document.getElementById("message").textContent = "";
-		}, 3000);
-	}
-});
-
-// Add event listener to the update button1
-document.getElementById("update-button1").addEventListener("click", () => {
-	const selectedRadio = document.querySelector(
-		'input[name="selectedName"]:checked'
-	);
-	if (selectedRadio) {
-		const selectedImageName = selectedRadio.value;
-		// Call the function to update Firestore with the selected image URL
-		updateFirestoreWithSelectedURL1(selectedImageName);
-	} else {
-		document.getElementById("message").textContent = "Please select an image.";
-		setTimeout(function () {
-			document.getElementById("message").textContent = "";
-		}, 3000);
-	}
-});
 
 function closeImageModal() {
 	var modal = document.getElementById("imageModal");

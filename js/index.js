@@ -17,6 +17,18 @@ const totfdCollection = collection(firestore, "totfd");
 const contactAndPaymentsDocRef = doc(totfdCollection, "ContactAndPayments");
 const homepageDocRef = doc(totfdCollection, "Homepage");
 
+const freeQuoteButtons = document.querySelectorAll(".free-quote-button");
+
+freeQuoteButtons.forEach(function (button) {
+	button.addEventListener("click", function (event) {
+		event.preventDefault();
+		const targetElement = document.getElementById("serviceContainer2");
+		targetElement.scrollIntoView({
+			behavior: "smooth",
+		});
+	});
+});
+
 function getHomePageDataFromFirestoreAndSave() {
 	getDoc(homepageDocRef)
 		.then((docSnapshot) => {
@@ -42,8 +54,6 @@ function getHomePageDataFromFirestoreAndSave() {
 						aboutUsImage.style.display = "none";
 					}
 					console.log("Homepage data found in session storage");
-
-					const homepageImageUrl = homepageData.homePageimageurl;
 
 					document.getElementById("logoimage").src = homepageData.logoimageurl;
 
@@ -73,14 +83,22 @@ function getHomePageDataFromFirestoreAndSave() {
 					} else {
 						footerMessage.textContent = null;
 					}
+					const homepageImageUrl1 = homepageData.homePageImageUrl1;
+					const homepageImageUrl2 = homepageData.homePageImageUrl2;
 
-					if (homepageImageUrl) {
-						document.getElementById("homePageImage").src = homepageImageUrl;
-						document.getElementById("homePageImage2").src = homepageImageUrl;
+					if (homepageImageUrl1 && homepageImageUrl2) {
+						document.getElementById("homePageImage").src = homepageImageUrl1;
+						document.getElementById("homePageImage2").src = homepageImageUrl2;
 					} else {
-						console.log("No background image to set");
-					}
+						const commonImageUrl = homepageImageUrl1 || homepageImageUrl2;
 
+						if (commonImageUrl) {
+							document.getElementById("homePageImage").src = commonImageUrl;
+							document.getElementById("homePageImage2").src = commonImageUrl;
+						} else {
+							console.log("No background image to set");
+						}
+					}
 					const aboutUsCaption = document.getElementById("aboutUsCaption");
 					aboutUsCaption.textContent = homepageData.aboutUsCaption;
 
